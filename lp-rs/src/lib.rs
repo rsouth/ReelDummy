@@ -2,21 +2,27 @@ extern crate reqwest;
 
 use std::fs::File;
 
-pub fn download(file_name: &str) -> bool {
+pub fn download(file_name: &str) -> Result<bool, String> {
     let _resp = reqwest::blocking::get("https://picsum.photos/200/300");
     match _resp {
-        Ok(mut res) => {
-            let mut _file = File::create(file_name);
-            let mut _file = _file.unwrap();
-            let write_result = ::std::io::copy(&mut res, &mut _file);
-            match write_result {
-                Ok(_res) => true,
-                Err(_e) => false,
+        Ok(mut res) => match File::create(file_name) {
+            Ok(mut file) => {
+                if let Err(e) = ::std::io::copy(&mut res, &mut file) {
+                    eprintln!("Error: {}", e);
+                    Err(e.to_string())
+                } else {
+                    println!("OK!");
+                    Ok(true)
+                }
             }
-        }
+            Err(err) => {
+                eprintln!("Error: {}", err);
+                Err(err.to_string())
+            }
+        },
         Err(e) => {
             eprintln!("error.. {}", e);
-            false
+            Err(e.to_string())
         }
     }
 }
