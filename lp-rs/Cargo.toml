@@ -13,3 +13,6 @@ publish = false
 
 [dependencies]
 "reqwest" = { "version" = "0.10.8", "features" = ["blocking"] }
+
+[dev-dependencies]
+mockall = "0.8.0"
