@@ -1,73 +1,96 @@
 extern crate reqwest;
 
-use std::fs::File;
+use std::fmt;
+use std::io::Cursor;
 
-pub fn download(width: i32, height: i32, file_name: &str) -> Result<String, String> {
-    let url = format!("{}/{}", width, height);
-    let resp = reqwest::blocking::get(&format!("https://picsum.photos/{}", url));
-    match resp {
-        Ok(mut res) => match File::create(file_name) {
-            Ok(mut file) => {
-                let hmac = parse_hmac(res.url());
-                return save_file(&mut res, &mut file)
-                    .and_then(|_| hmac.ok_or("Failed to get HMAC from response header".to_string()))
-                    .or_else(|_| Err("Failed to create image file".to_string()));
-            }
-            Err(err) => Err(err.to_string()),
-        },
-        Err(e) => {
-            eprintln!("error.. {}", e);
-            Err(e.to_string())
+use image::{DynamicImage, GenericImageView, ImageError};
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+struct Config {
+    #[serde(default = "default_picsum_url")]
+    picsum_url: String,
+
+    #[serde(default = "default_retry_attempts")]
+    retry_attempts: u32,
+}
+
+fn default_picsum_url() -> String {
+    "https://picsum.photos/".to_string()
+}
+
+// TODO
+fn default_retry_attempts() -> u32 {
+    1
+}
+
+pub struct LoremPicsum {
+    config: Config,
+}
+
+impl Default for LoremPicsum {
+    fn default() -> Self {
+        let cfg = match envy::from_env::<Config>() {
+            Ok(config) => config,
+            Err(error) => panic!("{:#?}", error),
+        };
+
+        LoremPicsum { config: cfg }
+    }
+}
+
+#[derive(Debug)]
+pub enum PicsumError {
+    HttpError,
+    ImageError,
+}
+
+impl std::error::Error for PicsumError {}
+
+impl fmt::Display for PicsumError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PicsumError::HttpError => write!(f, "HTTP Error"),
+            PicsumError::ImageError => write!(f, "Image Error"),
         }
     }
 }
 
-fn save_file(res: &mut reqwest::blocking::Response, file: &mut File) -> Result<bool, String> {
-    if let Err(e) = ::std::io::copy(res, file) {
-        eprintln!("Error: {}", e);
-        Err(e.to_string())
-    } else {
-        println!("File Saved");
-        let _hmac = parse_hmac(&res.url());
-        Ok(true)
+impl From<reqwest::Error> for PicsumError {
+    fn from(_: reqwest::Error) -> Self {
+        PicsumError::HttpError
     }
 }
 
-fn parse_hmac(url: &reqwest::Url) -> Option<String> {
-    println!("Url: {}", url.to_string());
-    let mut pairs = url.query_pairs();
-    let hmac = pairs
-        .find(|k| k.0.to_string() == "hmac")
-        .map(|x| x.1.to_string());
-
-    println!("Parsed image HMAC as {:?}", hmac);
-    return hmac;
+impl From<image::ImageError> for PicsumError {
+    fn from(_: ImageError) -> Self {
+        PicsumError::ImageError
+    }
 }
 
-// #[cfg(test)]
-// use mockall::{automock, mock, predicate::*};
-// use reqwest::blocking::Response;
-//
-// #[cfg_attr(test, automock)]
-// trait MyTrait {
-//     fn foo(&self, x: u32) -> u32;
-// }
-//
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     // use crate::download;
-//
-//     #[test]
-//     fn it_works() {
-//         assert_eq!(2 + 2, 4);
-//     }
-//
-//     #[test]
-//     fn mytest() {
-//         let mut mock = MockMyTrait::new();
-//         mock.expect_foo().with(eq(4)).times(1).returning(|x| x + 1);
-//         assert_eq!(5, mock.foo(4));
-//     }
-// }
+impl LoremPicsum {
+    pub fn download(&self, width: i32, height: i32) -> Result<DynamicImage, PicsumError> {
+        println!("Using configuration {:?}", self.config);
+        match self.get_current_date(width, height) {
+            Ok(o) => {
+                println!("Got image with dims {}x{}", o.width(), o.height());
+                Ok(o)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn get_current_date(&self, width: i32, height: i32) -> Result<DynamicImage, PicsumError> {
+        let url = format!("{}/{}/{}", self.config.picsum_url, width, height);
+        match reqwest::blocking::get(url)?.bytes() {
+            Ok(b) => {
+                println!("Downloaded image");
+                let reader = image::io::Reader::new(Cursor::new(b.to_vec()))
+                    .with_guessed_format()
+                    .unwrap();
+                Ok(reader.decode()?)
+            }
+            Err(_) => Err(PicsumError::HttpError),
+        }
+    }
+}

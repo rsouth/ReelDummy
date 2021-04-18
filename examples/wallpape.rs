@@ -7,6 +7,11 @@ fn main() {
         .unwrap()
         .as_millis();
 
-    let hmac = lp_rs::download(640, 480, &format!("test-{}.jpg", time_millis));
-    println!("HMAC for the image is: {:?}", hmac);
+    let file_path = &format!("example-{}.jpg", time_millis);
+
+    lp_rs::LoremPicsum::default()
+        .download(640, 480)
+        .expect("failed to download")
+        .save(file_path)
+        .expect("failed to save");
 }
