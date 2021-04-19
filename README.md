@@ -2,7 +2,7 @@
 
 
 ![Rust](https://github.com/rsouth/lp-rs/workflows/Rust/badge.svg)
-![](https://img.shields.io/github/languages/code-size/rsouth/lp-rs)
+![](https://img.shields.io/github/languages/code-size/rsouth/ReelDummy)
 
 
 API and Background Downloader for Lorem Picsum
