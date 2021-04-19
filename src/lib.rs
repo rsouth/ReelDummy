@@ -3,7 +3,7 @@ extern crate reqwest;
 use std::fmt;
 use std::io::Cursor;
 
-use image::{DynamicImage, GenericImageView, ImageError};
+use image::{DynamicImage, ImageError};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -71,16 +71,7 @@ impl From<image::ImageError> for PicsumError {
 impl LoremPicsum {
     pub fn download(&self, width: i32, height: i32) -> Result<DynamicImage, PicsumError> {
         println!("Using configuration {:?}", self.config);
-        match self.get_current_date(width, height) {
-            Ok(o) => {
-                println!("Got image with dims {}x{}", o.width(), o.height());
-                Ok(o)
-            }
-            Err(e) => Err(e),
-        }
-    }
 
-    fn get_current_date(&self, width: i32, height: i32) -> Result<DynamicImage, PicsumError> {
         let url = format!("{}/{}/{}", self.config.picsum_url, width, height);
         match reqwest::blocking::get(url)?.bytes() {
             Ok(b) => {
@@ -93,4 +84,5 @@ impl LoremPicsum {
             Err(_) => Err(PicsumError::HttpError),
         }
     }
+
 }
