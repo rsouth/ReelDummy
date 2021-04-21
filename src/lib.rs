@@ -48,20 +48,36 @@ impl From<GeneratorError> for ReelError {
     }
 }
 
-pub struct ReelDummy {}
+pub struct ReelDummy {
+    image_type: ImageType,
+    height: u32,
+    width: u32,
+}
 
 impl ReelDummy {
-    pub fn generate_image(
-        image_type: ImageType,
-        width: u32,
-        height: u32,
-    ) -> Result<DynamicImage, ReelError> {
-        match image_type {
+    pub fn new(image_type: ImageType) -> ReelDummy {
+        ReelDummy {
+            image_type,
+            height: 0,
+            width: 0,
+        }
+    }
+}
+
+impl ReelDummy {
+    pub fn with_size(&mut self, width: u32, height: u32) -> &mut ReelDummy {
+        self.width = width;
+        self.height = height;
+        self
+    }
+
+    pub fn fetch(&self) -> Result<DynamicImage, ReelError> {
+        match self.image_type {
             ImageType::Generated => Generator::default()
-                .draw(width, height)
+                .draw(self.width, self.height)
                 .map_err(|_| ReelError::Error),
             ImageType::LoremPicsum => LoremPicsum::default()
-                .download(width, height)
+                .download(self.width, self.height)
                 .map_err(|_| ReelError::Error),
         }
     }
