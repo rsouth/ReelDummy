@@ -1,11 +1,11 @@
 [package]
-name = "lp-rs"
+name = "reel_dummy"
 version = "0.1.0"
 authors = ["Richard South"]
 edition = "2018"
-description = "access to Lorem Picsum imagery"
+description = "Generate placeholder images on the fly"
 readme = "README.md"
-repository = "https://github.com/rsouth/lp-rs"
+repository = "https://github.com/rsouth/ReelDummy"
 license-file = "LICENSE"
 publish = false
 
@@ -16,3 +16,4 @@ envy = "0.4"
 reqwest = { version = "0.11.3", features = ["blocking", "json"] }
 serde = { version = "1.0.125", features = ["derive"] }
 image = "0.23.14"
+imageproc = "0.22.0"

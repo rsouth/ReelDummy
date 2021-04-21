@@ -1,11 +1,12 @@
-# lp-rs
+# ReelDummy
 
 
 ![Rust](https://github.com/rsouth/lp-rs/workflows/Rust/badge.svg)
 ![](https://img.shields.io/github/languages/code-size/rsouth/ReelDummy)
 
 
-API and Background Downloader for Lorem Picsum
+Generate placeholder images on the fly.
 
-
-First project, for learning Rust.
+ - Generated / customisable
+ - [Lorem Picsum](https://picsum.photos/)
+ - ...
