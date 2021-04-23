@@ -16,35 +16,35 @@ pub enum ImageType {
 }
 
 #[derive(Debug)]
-pub enum ReelError {
-    Error,
-}
+pub struct ReelError;
 
 impl std::error::Error for ReelError {}
 
 impl fmt::Display for ReelError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ReelError::Error => write!(f, "Reel Error"),
+            &_ => {
+                write!(f, "Reel Error")
+            }
         }
     }
 }
 
 impl From<ImageError> for ReelError {
     fn from(_: ImageError) -> Self {
-        ReelError::Error
+        ReelError {}
     }
 }
 
 impl From<PicsumError> for ReelError {
     fn from(_: PicsumError) -> Self {
-        ReelError::Error
+        ReelError {}
     }
 }
 
 impl From<GeneratorError> for ReelError {
     fn from(_: GeneratorError) -> Self {
-        ReelError::Error
+        ReelError {}
     }
 }
 
@@ -64,6 +64,22 @@ impl ReelDummy {
     }
 }
 
+impl Default for ReelDummy {
+    fn default() -> Self {
+        ReelDummy {
+            image_type: ImageType::Generated,
+            height: 0,
+            width: 0,
+        }
+    }
+}
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+trait Drawer {
+    fn draw(&mut self, width: u32, height: u32) -> Result<DynamicImage>;
+}
+
 impl ReelDummy {
     pub fn with_size(&mut self, width: u32, height: u32) -> &mut ReelDummy {
         self.width = width;
@@ -71,14 +87,14 @@ impl ReelDummy {
         self
     }
 
-    pub fn fetch(&self) -> Result<DynamicImage, ReelError> {
+    pub fn fetch(&self) -> Result<DynamicImage> {
         match self.image_type {
             ImageType::Generated => Generator::default()
                 .draw(self.width, self.height)
-                .map_err(|_| ReelError::Error),
+                .map_err(|_| ReelError {}.into()),
             ImageType::LoremPicsum => LoremPicsum::default()
-                .download(self.width, self.height)
-                .map_err(|_| ReelError::Error),
+                .draw(self.width, self.height)
+                .map_err(|_| ReelError {}.into()),
         }
     }
 }

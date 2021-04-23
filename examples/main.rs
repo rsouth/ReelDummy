@@ -15,11 +15,11 @@ fn main() {
         .unwrap();
     img.save(&format!("generated-{}.png", time_millis)).unwrap();
 
-    let img = ReelDummy::new(ImageType::LoremPicsum)
-        .with_size(640, 480)
-        .fetch()
-        .unwrap();
-    img.save(&format!("picsum-{}.png", time_millis)).unwrap();
+    // let img = ReelDummy::new(ImageType::LoremPicsum)
+    //     .with_size(640, 480)
+    //     .fetch()
+    //     .unwrap();
+    // img.save(&format!("picsum-{}.png", time_millis)).unwrap();
 
     println!("Fin.");
 }

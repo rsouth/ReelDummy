@@ -4,6 +4,8 @@ use std::io::Cursor;
 use image::{DynamicImage, ImageError};
 use serde::Deserialize;
 
+use crate::Drawer;
+
 #[derive(Deserialize, Debug)]
 struct Config {
     #[serde(default = "default_picsum_url")]
@@ -66,8 +68,10 @@ impl From<image::ImageError> for PicsumError {
     }
 }
 
-impl LoremPicsum {
-    pub fn download(&self, width: u32, height: u32) -> Result<DynamicImage, PicsumError> {
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+impl Drawer for LoremPicsum {
+    fn draw(&mut self, width: u32, height: u32) -> Result<DynamicImage> {
         println!("Using configuration {:?}", self.config);
 
         let url = format!("{}/{}/{}", self.config.picsum_url, width, height);
@@ -79,7 +83,7 @@ impl LoremPicsum {
                     .unwrap();
                 Ok(reader.decode()?)
             }
-            Err(_) => Err(PicsumError::HttpError),
+            Err(_) => Err(Box::new(PicsumError::HttpError)),
         }
     }
 }
